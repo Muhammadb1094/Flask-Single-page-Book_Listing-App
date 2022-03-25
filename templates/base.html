@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- Required meta tags -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Bootstrap CSS -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+                  rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+                  crossorigin="anonymous">
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+
+    <script src="{{ url_for('static', filename='js/home.js') }}"></script>
+
+
+<title>Book Listing App</title>
+</head>
+<body>
+
+<!-- Bootstrap5  NavBar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid">
+    <a class="navbar-brand text-primary" href="{{ url_for('index') }}">Flask Book Listing App</a>
+    <a class="navbar-item text-primary" href="{{ url_for('index') }}">Add New | Home</a>
+  </div>
+</nav>
+<input type="text" id="base_url" value="{{base_url}}" hidden>
+
+<div class="container-fluid">
+<div class="container bg-light border my-2">
+    <h1 class="text-primary py-2 text-center"> All Books </h1>
+
+    <div class="row justify-content-center border">
+                <div class="col-lg-4 col-md-4 border-end">
+                    <form id="search_form" method="GET" class=" form-inline text-center p-2 text-primary ">
+                        <h3>Search a Book by Name:</h3>
+                        <input id="search" type="text" name="name" required class="m-2 form-control"
+                               placeholder="Enter Book Name to search">
+                        <input  type="submit" name="search" value="Search" class="btn m-2 btn-outline-primary" >
+                    </form>
+                </div>
+
+                <div class="col-lg-8 col-md-8">
+                    <form id="form" method="POST" class="text-center p-2 text-primary ">
+                        <h3 id="head">Add New Book</h3>
+                        <input id="name" type="text" name="name" required class="m-2 form-control" placeholder="Enter Name">
+                        <textarea id="description"  minlength="100" name="description" required class="m-2 form-control" placeholder="Enter description"></textarea>
+                        <div  class="text-center text-success" id="output" ></div>
+                        <input  type="submit" name="submit" value="submit" class="btn m-2 btn-outline-primary" >
+                    </form>
+                </div>
+    </div>
+
+    <ol id="myList" class="h6"></ol>
+
+
+</div>
+</div>
+
+<script>
+     $('#form').on('submit', function(e){
+
+     e.preventDefault();
+     var base_url = document.getElementById("base_url").value;
+
+       $.ajax({
+            type : "POST",
+            url: base_url +'/books/',
+            data: {
+             name : $('#name').val(),
+             description : $('#description').val(),
+
+             dataType: "json",
+
+            },
+
+            success: function(data){
+
+              document.getElementById("output").innerHTML  = "Book Added Successfully";
+              document.getElementById("name").value  = "";
+              document.getElementById("description").value  = "";
+
+              function reload(){
+                            var base_url = document.getElementById("base_url").value;
+
+                            fetch( base_url + '/get_all_books/')
+                              .then((response) => {
+
+                                return response.json();
+                              })
+                              .then((data) => {
+
+                                var books = data.books;
+
+                                let list = document.getElementById("myList");
+                                $('#myList').empty();
+                                if (books.length ==0){
+
+                                    let li = document.createElement("li");
+                                    li.innerText = "Found Nothing!";
+                                    list.appendChild(li);
+                                }
+
+
+                                books.forEach((item)=>{
+
+
+                                                  let edit = document.createElement("a");
+                                                  edit.href = "";
+                                                  edit.innerText = "Edit";
+                                                  edit.classList.add('m-3');
+
+                                                  let deletes = document.createElement("a");
+                                                  deletes.href = "http://127.0.0.1:5000/delete/" + item["id"] + "/";
+                                                  deletes.innerText = "Delete";
+
+                                                  deletes.classList.add('m-3');
+
+                                                  let span = document.createElement("span");
+                                                  span.innerText = "     |     ";
+                                                  span.classList.add('h4');
+
+                                                  let span2 = document.createElement("span");
+                                                  span2.innerText = "     |     ";
+                                                  span2.classList.add('h4');
+
+
+                                                  let li = document.createElement("li");
+                                                  li.innerText = "BOOK NAME: " + item["name"];
+                                                  li.classList.add('p-3');
+
+                                                  li.append(span);
+
+                                                  li.append("DESCRIPTION: " + item["description"]);
+
+                                                  li.append(span2);
+
+                                                  li.append(edit);
+                                                  li.append(deletes);
+
+                                                  list.appendChild(li);
+                                });
+
+                              });
+
+              }
+                reload();
+            },
+            failure: function() {
+                document.getElementById("output").innerHTML  = "Fail to ADD Book!" ;
+            }
+
+
+        });
+
+
+             });
+</script>
+
+
+<script>
+     $('#search_form').on('submit', function(e){
+
+     e.preventDefault();
+     var base_url = document.getElementById("base_url").value;
+        var url = base_url + '/search/?search=' + $('#search').val();
+        console.log(url);
+       $.ajax({
+            type : "GET",
+            url: url,
+
+            success: function(data){
+
+              document.getElementById("search").value  = "";
+
+
+                            var books = data.books;
+                            console.log(books);
+                            let list = document.getElementById("myList");
+                            $('#myList').empty();
+                            $('#myList').empty();
+                            if (books.length ==0){
+
+                                let li = document.createElement("li");
+                                li.innerText = "Found Nothing!";
+                                list.appendChild(li);
+                            }
+
+
+                            books.forEach((item)=>{
+
+
+                                              let edit = document.createElement("a");
+                                              edit.href = "";
+                                              edit.innerText = "Edit";
+                                              edit.classList.add('m-3');
+
+                                              let deletes = document.createElement("a");
+                                              deletes.href = "http://127.0.0.1:5000/delete/" + item["id"] + "/";
+                                              deletes.innerText = "Delete";
+
+                                              deletes.classList.add('m-3');
+
+                                              let span = document.createElement("span");
+                                              span.innerText = "     |     ";
+                                              span.classList.add('h4');
+
+                                              let span2 = document.createElement("span");
+                                              span2.innerText = "     |     ";
+                                              span2.classList.add('h4');
+
+
+                                              let li = document.createElement("li");
+                                              li.innerText = "BOOK NAME: " + item["name"];
+                                              li.classList.add('p-3');
+
+                                              li.append(span);
+
+                                              li.append("DESCRIPTION: " + item["description"]);
+
+                                              li.append(span2);
+
+                                              li.append(edit);
+                                              li.append(deletes);
+
+                                              list.appendChild(li);
+                            });
+
+            },
+            failure: function() {
+                document.getElementById("output").innerHTML  = "Fail to ADD Book!" ;
+            }
+
+
+        });
+
+
+             });
+</script>
+
+
+</body>
+</html>
